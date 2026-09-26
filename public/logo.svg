@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none" role="img" aria-label="Query Lab">
+  <rect width="40" height="40" fill="#12263a"/>
+  <path d="M10 12h20v3H10V12Zm0 6.5h20v3H10v-3Zm0 6.5h12v3H10v-3Z" fill="#eef3f7"/>
+  <path d="M26 25.5h4v3h-4v-3Z" fill="#0f766e"/>
+  <circle cx="30" cy="14.5" r="2" fill="#0f766e"/>
+</svg>
