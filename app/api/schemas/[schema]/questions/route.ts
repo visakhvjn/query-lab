@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AuthSecretError, assertAuthSecret } from "@/lib/auth";
 import { inspectSchema, schemaExists } from "@/lib/schema/inspect";
 import { isValidIdent } from "@/lib/schema/types";
 import { generateQuestionsWithAI } from "@/lib/questions/generate";
@@ -43,8 +44,10 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 }
 
-export async function POST(_request: Request, context: RouteContext) {
+export async function POST(request: Request, context: RouteContext) {
   try {
+    assertAuthSecret(request);
+
     const { schema: rawSchema } = await context.params;
     const schemaName = decodeURIComponent(rawSchema);
 
@@ -73,6 +76,12 @@ export async function POST(_request: Request, context: RouteContext) {
       questions,
     });
   } catch (error) {
+    if (error instanceof AuthSecretError) {
+      return NextResponse.json(
+        { ok: false, error: error.message },
+        { status: error.status },
+      );
+    }
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }

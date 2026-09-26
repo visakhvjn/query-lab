@@ -1,6 +1,7 @@
 import sql from "@/lib/db";
 import type { GeneratedSchema, TableDef } from "@/lib/schema/types";
 import { isAllowedType, isValidIdent } from "@/lib/schema/types";
+import { registerSchemaMetadata } from "@/lib/schema/list";
 
 function quoteIdent(name: string): string {
   if (!isValidIdent(name)) {
@@ -127,6 +128,8 @@ export async function materializeSchema(schema: GeneratedSchema) {
     }
     rowCounts = await seedTables(tx, finalSchema);
   });
+
+  await registerSchemaMetadata(schemaName);
 
   return { schema: finalSchema, statements, rowCounts };
 }
