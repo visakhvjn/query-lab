@@ -1,7 +1,10 @@
 import sql from "@/lib/db";
 import type { GeneratedSchema, TableDef } from "@/lib/schema/types";
 import { isAllowedType, isValidIdent } from "@/lib/schema/types";
-import { registerSchemaMetadata } from "@/lib/schema/list";
+import {
+  ensureSchemaMetadataTable,
+  registerSchemaMetadata,
+} from "@/lib/schema/list";
 
 function quoteIdent(name: string): string {
   if (!isValidIdent(name)) {
@@ -105,6 +108,8 @@ async function seedTables(
 }
 
 export async function materializeSchema(schema: GeneratedSchema) {
+  await ensureSchemaMetadataTable();
+
   let schemaName = schema.schemaName;
   const existing = await sql`
     select 1
@@ -127,9 +132,8 @@ export async function materializeSchema(schema: GeneratedSchema) {
       await tx.unsafe(statement);
     }
     rowCounts = await seedTables(tx, finalSchema);
+    await registerSchemaMetadata(schemaName, tx);
   });
-
-  await registerSchemaMetadata(schemaName);
 
   return { schema: finalSchema, statements, rowCounts };
 }

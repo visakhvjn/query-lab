@@ -8,8 +8,20 @@ export type SchemaListItem = {
   generatedAt: string;
 };
 
+export async function ensureSchemaMetadataTable() {
+  await sql`create schema if not exists schema_metadata`;
+  await sql`
+    create table if not exists schema_metadata.schemas (
+      id bigserial primary key,
+      schema_name text not null unique,
+      created_at timestamptz not null default now()
+    )
+  `;
+}
+
 export async function listChallengeSchemas(): Promise<SchemaListItem[]> {
   await ensureQuestionsTable();
+  await ensureSchemaMetadataTable();
 
   const rows = await sql<
     {
@@ -47,8 +59,12 @@ export async function listChallengeSchemas(): Promise<SchemaListItem[]> {
   }));
 }
 
-export async function registerSchemaMetadata(schemaName: string) {
-  await sql`
+export async function registerSchemaMetadata(
+  schemaName: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  executor: any = sql,
+) {
+  await executor`
     insert into schema_metadata.schemas (schema_name)
     values (${schemaName})
     on conflict (schema_name) do nothing

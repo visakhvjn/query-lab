@@ -5,6 +5,10 @@ import Link from "next/link";
 import { ErDiagram, type ErForeignKey, type ErTable } from "@/components/er-diagram";
 import { Landing } from "@/components/landing";
 import { TableDataView } from "@/components/table-data-view";
+import {
+  loadSolvedQuestions,
+  markQuestionSolved,
+} from "@/lib/progress";
 
 type SchemaListItem = {
   schemaName: string;
@@ -59,6 +63,7 @@ export function ChallengeApp() {
   const [checkingQuestion, setCheckingQuestion] = useState<number | null>(null);
   const [showErDiagram, setShowErDiagram] = useState(false);
   const [loadingSchema, setLoadingSchema] = useState<string | null>(null);
+  const [solvedQuestions, setSolvedQuestions] = useState<number[]>([]);
   const [pending, startTransition] = useTransition();
 
   const busy = pending || Boolean(loadingSchema);
@@ -85,6 +90,7 @@ export function ChallengeApp() {
     setShowSolution({});
     setSqlDrafts({});
     setCheckResults({});
+    setSolvedQuestions(loadSolvedQuestions(data.schemaName));
   }
 
   useEffect(() => {
@@ -144,6 +150,11 @@ export function ChallengeApp() {
           result: data.result,
         },
       }));
+      if (data.correct) {
+        setSolvedQuestions(
+          markQuestionSolved(active.schemaName, questionNumber),
+        );
+      }
     } catch (e) {
       setCheckResults((prev) => ({
         ...prev,
@@ -284,10 +295,15 @@ export function ChallengeApp() {
               <ol className="space-y-3">
                 {active.questions.map((q, index) => {
                   const open = openQuestion === q.questionNumber;
+                  const solved = solvedQuestions.includes(q.questionNumber);
                   return (
                     <li
                       key={q.id}
-                      className="anim-tick border border-line/80 bg-white/65 backdrop-blur-sm"
+                      className={`anim-tick border backdrop-blur-sm ${
+                        solved
+                          ? "border-accent/50 bg-teal-50/80"
+                          : "border-line/80 bg-white/65"
+                      }`}
                       style={{ animationDelay: `${index * 40}ms` }}
                     >
                       <button
@@ -307,6 +323,11 @@ export function ChallengeApp() {
                             >
                               {q.difficulty}
                             </span>
+                            {solved ? (
+                              <span className="bg-accent px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-white">
+                                Completed
+                              </span>
+                            ) : null}
                             {q.topics.slice(0, 2).map((topic) => (
                               <span
                                 key={topic}
