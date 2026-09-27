@@ -231,60 +231,57 @@ export function ChallengeApp() {
           }}
         />
       ) : (
-        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-10 px-6 pb-20 pt-2 md:px-10">
-          <section className="anim-rise space-y-5">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h2 className="break-all font-mono text-2xl font-medium text-ink md:text-3xl">
-                  {active.schemaName}
-                </h2>
-                {active.description ? (
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft">
-                    {active.description}
-                  </p>
-                ) : null}
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowErDiagram(true)}
-                className="inline-flex h-11 items-center justify-center border border-ink/20 bg-white/70 px-5 text-sm font-medium text-ink transition hover:border-accent hover:text-accent-deep"
-              >
-                View ER diagram
-              </button>
-            </div>
-
-            {error ? (
-              <p className="text-sm text-danger" role="alert">
-                {error}
+        <main className="flex w-full flex-1 flex-col gap-8 px-6 pb-20 pt-2 md:px-10">
+          <div className="anim-rise min-w-0">
+            <h2 className="break-all font-mono text-2xl font-medium text-ink md:text-3xl">
+              {active.schemaName}
+            </h2>
+            {active.description ? (
+              <p className="mt-3 text-sm leading-relaxed text-ink-soft">
+                {active.description}
               </p>
             ) : null}
+          </div>
 
-            <div>
-              <div className="mb-3 flex items-baseline justify-between gap-3">
-                <h3 className="font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
-                  Table data
-                </h3>
-                <span className="font-mono text-[10px] text-ink-soft">
+          {error ? (
+            <p className="text-sm text-danger" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          <div className="grid w-full gap-8 lg:grid-cols-2 lg:items-start">
+          <section className="anim-rise min-w-0 border border-mono-bg bg-mono-bg p-4 md:p-5 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto">
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <h3 className="font-mono text-xs uppercase tracking-[0.18em] text-teal-100/70">
+                Table data
+              </h3>
+              <div className="flex items-baseline gap-3">
+                <span className="font-mono text-[10px] text-teal-100/60">
                   {diagramTables.length} tables · {active.foreignKeys.length}{" "}
                   links
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setShowErDiagram(true)}
+                  className="text-xs font-medium text-teal-300 underline underline-offset-4 transition hover:text-teal-100"
+                >
+                  View ER diagram
+                </button>
               </div>
-              <TableDataView tables={diagramTables} />
             </div>
+            <TableDataView tables={diagramTables} />
           </section>
 
-          <section className="anim-rise-delay-1">
-            <div className="mb-5 flex items-end justify-between gap-4">
-              <div>
-                <h3 className="font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
-                  Questions
-                </h3>
-                <p className="mt-1 text-lg font-medium text-ink">
-                  {active.questions.length
-                    ? `${active.questions.length} challenges ready`
-                    : "No questions yet"}
-                </p>
-              </div>
+          <section className="anim-rise-delay-1 min-w-0">
+            <div className="mb-5">
+              <h3 className="font-mono text-xs uppercase tracking-[0.18em] text-ink-soft">
+                Questions
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                {active.questions.length
+                  ? "Click a question box, write your SQL query, then run & check to test your knowledge."
+                  : "No questions are available for this schema yet."}
+              </p>
             </div>
 
             {active.questions.length === 0 ? (
@@ -491,6 +488,7 @@ export function ChallengeApp() {
               </ol>
             )}
           </section>
+          </div>
         </main>
       )}
 
