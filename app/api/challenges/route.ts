@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { AuthSecretError, assertAuthSecret } from "@/lib/auth";
 import { generateQuestionsWithAI } from "@/lib/questions/generate";
 import { replaceQuestionsForSchema } from "@/lib/questions/store";
@@ -7,6 +7,47 @@ import { inspectSchema } from "@/lib/schema/inspect";
 import { materializeSchema } from "@/lib/schema/materialize";
 
 export const maxDuration = 300;
+
+const LOG_PREFIX = "[challenges]";
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Unknown error";
+}
+
+async function runChallengeGeneration(): Promise<void> {
+  console.log(`${LOG_PREFIX} generation started`);
+
+  let schemaName: string;
+  try {
+    const generated = await generateSchemaWithAI();
+    const result = await materializeSchema(generated);
+    schemaName = result.schema.schemaName;
+    console.log(`${LOG_PREFIX} schema created: ${schemaName}`);
+  } catch (error) {
+    console.error(
+      `${LOG_PREFIX} schema step failed: ${errorMessage(error)}`,
+      error,
+    );
+    return;
+  }
+
+  try {
+    const snapshot = await inspectSchema(schemaName);
+    const generatedQuestions = await generateQuestionsWithAI(snapshot);
+    const questions = await replaceQuestionsForSchema(
+      schemaName,
+      generatedQuestions,
+    );
+    console.log(
+      `${LOG_PREFIX} questions generated: ${schemaName} (${questions.length})`,
+    );
+  } catch (error) {
+    console.error(
+      `${LOG_PREFIX} questions step failed for "${schemaName}": ${errorMessage(error)}. Retry with POST /api/schemas/${schemaName}/questions`,
+      error,
+    );
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -18,53 +59,20 @@ export async function POST(request: Request) {
         { status: error.status },
       );
     }
-    throw error;
-  }
-
-  let schemaName: string;
-  let description: string;
-  let rowCounts: Record<string, number>;
-
-  try {
-    const generated = await generateSchemaWithAI();
-    const result = await materializeSchema(generated);
-    schemaName = result.schema.schemaName;
-    description = result.schema.description;
-    rowCounts = result.rowCounts;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { ok: false, stage: "schema", error: message },
+      { ok: false, error: errorMessage(error) },
       { status: 500 },
     );
   }
 
-  try {
-    const snapshot = await inspectSchema(schemaName);
-    const generatedQuestions = await generateQuestionsWithAI(snapshot);
-    const questions = await replaceQuestionsForSchema(
-      schemaName,
-      generatedQuestions,
-    );
+  after(runChallengeGeneration);
 
-    return NextResponse.json({
+  return NextResponse.json(
+    {
       ok: true,
-      schemaName,
-      description,
-      rowCounts,
-      questionCount: questions.length,
-      questions,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json(
-      {
-        ok: false,
-        stage: "questions",
-        schemaName,
-        error: `Schema "${schemaName}" was created but question generation failed: ${message}. Retry with POST /api/schemas/${schemaName}/questions.`,
-      },
-      { status: 500 },
-    );
-  }
+      status: "started",
+      message: "Challenge generation started in the background.",
+    },
+    { status: 202 },
+  );
 }
