@@ -209,7 +209,7 @@ export function Landing({
               open the tables, and keep working through the questions.
             </p>
 
-            <div className="mt-8 flex-1 border-t border-line/80">
+            <div className="mt-8 max-h-[245px] overflow-y-auto overscroll-contain border-t border-line/80">
               {busy && schemas.length === 0 ? (
                 <p className="py-6 font-mono text-sm text-ink-soft">
                   Loading stock…
