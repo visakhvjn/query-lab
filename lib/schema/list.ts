@@ -1,5 +1,6 @@
 import sql from "@/lib/db";
 import { ensureQuestionsTable } from "@/lib/questions/store";
+import { isValidIdent } from "@/lib/schema/types";
 
 export type SchemaListItem = {
   schemaName: string;
@@ -69,4 +70,40 @@ export async function registerSchemaMetadata(
     values (${schemaName})
     on conflict (schema_name) do nothing
   `;
+}
+
+export async function deleteOldestSchema(
+  keepSchemaName: string,
+): Promise<string | null> {
+  await ensureQuestionsTable();
+  await ensureSchemaMetadataTable();
+
+  return sql.begin(async (tx) => {
+    const [oldest] = await tx<{ schema_name: string }[]>`
+      select schema_name
+      from schema_metadata.schemas
+      where schema_name <> ${keepSchemaName}
+      order by created_at asc
+      limit 1
+      for update
+    `;
+    if (!oldest) return null;
+
+    const name = oldest.schema_name;
+    if (!isValidIdent(name)) {
+      throw new Error(`Refusing to drop unsafe schema name: ${name}`);
+    }
+
+    await tx.unsafe(`drop schema if exists "${name}" cascade`);
+    await tx`
+      delete from public.sql_challenge_questions
+      where schema_name = ${name}
+    `;
+    await tx`
+      delete from schema_metadata.schemas
+      where schema_name = ${name}
+    `;
+
+    return name;
+  });
 }

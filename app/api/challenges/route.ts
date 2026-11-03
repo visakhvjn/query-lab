@@ -4,6 +4,7 @@ import { generateQuestionsWithAI } from "@/lib/questions/generate";
 import { replaceQuestionsForSchema } from "@/lib/questions/store";
 import { generateSchemaWithAI } from "@/lib/schema/generate";
 import { inspectSchema } from "@/lib/schema/inspect";
+import { deleteOldestSchema } from "@/lib/schema/list";
 import { materializeSchema } from "@/lib/schema/materialize";
 
 export const maxDuration = 300;
@@ -44,6 +45,19 @@ async function runChallengeGeneration(): Promise<void> {
   } catch (error) {
     console.error(
       `${LOG_PREFIX} questions step failed for "${schemaName}": ${errorMessage(error)}. Retry with POST /api/schemas/${schemaName}/questions`,
+      error,
+    );
+    return;
+  }
+
+  try {
+    const removed = await deleteOldestSchema(schemaName);
+    if (removed) {
+      console.log(`${LOG_PREFIX} oldest schema removed: ${removed}`);
+    }
+  } catch (error) {
+    console.error(
+      `${LOG_PREFIX} cleanup failed: ${errorMessage(error)}`,
       error,
     );
   }
