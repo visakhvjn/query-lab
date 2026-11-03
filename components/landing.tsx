@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 type SchemaListItem = {
@@ -254,7 +255,13 @@ export function Landing({
       <footer className="border-t border-line/70">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-10 md:flex-row md:items-center md:justify-between md:px-10">
           <p className="font-mono text-xs text-ink-soft">
-            © {new Date().getFullYear()} Query Lab
+            © {new Date().getFullYear()} Query Lab ·{" "}
+            <Link
+              href="/changelog"
+              className="text-ink underline-offset-4 transition hover:text-accent hover:underline"
+            >
+              Changelog
+            </Link>
           </p>
           <p className="font-mono text-xs text-ink-soft">
             Made by{" "}

@@ -50,7 +50,7 @@ type CheckOutcome = {
   };
 };
 
-export function ChallengeApp() {
+export function ChallengeApp({ version }: { version: string | null }) {
   const [schemas, setSchemas] = useState<SchemaListItem[]>([]);
   const [active, setActive] = useState<ActiveSchema | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -209,6 +209,15 @@ export function ChallengeApp() {
           />
           <span>Query Lab</span>
         </Link>
+        {version ? (
+          <Link
+            href="/changelog"
+            title="See what changed in each version"
+            className="border border-line/80 bg-white/45 px-2.5 py-1 font-mono text-xs text-ink-soft transition hover:border-accent hover:text-accent"
+          >
+            v{version}
+          </Link>
+        ) : null}
       </header>
 
       {!active ? (
